@@ -13,6 +13,7 @@
 3. Para que o script reconheça os eventos, o código executado pelo Arduino deve iniciar a comunicação serial no setup() com o mesmo baudrate usado pelo script (9600) e, depois, enviar a mensagem com Serial.println() no ponto do código em que a senha é validada. 
 4. É importante usar exatamente "HIGH" e "LOW", em maiúsculas, e utilizar println em vez de print em todas as instâncias, pois a quebra de linha é o que marca o fim da mensagem para o script.
 ```
+// rfid_app.ino
 void setup() {
   Serial.begin(9600); // mesmo baudrate do script
 }
