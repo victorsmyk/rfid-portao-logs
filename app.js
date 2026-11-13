@@ -64,7 +64,7 @@ async function listen() {
         return;
     }
     const port = new SerialPort({path: gotPort.path, baudRate: 9600});
-    console.log("Got arduino: port: ", gotPort.path);
+    console.log("Arduino identificado na porta ", gotPort.path);
     const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
     parser.on('data', (line) => {
         let status = 0 // 1 aberto 2 bloqueado
