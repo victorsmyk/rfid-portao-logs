@@ -5,26 +5,38 @@ const HTML_FILE = "./index.html";
 
 const RAW_HTML = `
 <!DOCTYPE html>
-<html lang=pt-br">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logs</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap');
-
         body {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 20px;
             font-family: 'Noto Serif', serif;
             max-width: 1200px;
+            background-color: #ffff;
+            color: #000;
         }
+        header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: right;
+        }
+
         p, h1, h2, h3, a, ul {
             margin: 0;
             padding: 0;
             text-decoration: none;
-            color: #222;
+            color: #000;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
         }
 
         h2 {
@@ -32,7 +44,23 @@ const RAW_HTML = `
         }
         h3 {
             text-transform: capitalize;
-            margin-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        .limpar-logs {
+            cursor: pointer;
+            outline: 0;
+            color: #fff;
+            background-color: #fd0d0d;
+            border-color: #fd0d0d;
+            display: inline-block;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: center;
+            border: 1px solid transparent;
+            padding: 6px 12px;
+            font-size: 16px;
+            border-radius: .25rem;
+            transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;   
         }
         .log-access {
             background-color: hsla(102, 100%, 50%, 0.425);
@@ -42,12 +70,26 @@ const RAW_HTML = `
         }
     </style>
 </head>
-<body>
+
+<body class="w3-dark-mode">
     <h1>Logs</h1>
-    <h3>Confira as atividades recentes no seu portão:</h3>
+    <header> 
+        <h3>Confira as atividades recentes no seu portão:</h3>
+    </header>
     <h4>
     <!-- REPLACE DIV -->
     </h4>
+    <button id="limparLogs" class="limpar-logs">Limpar Logs</button>
+
+    <script>
+        const limparLogsButton = document.getElementById('limparLogs');
+        const logsContainer = document.querySelector('h4');
+        limparLogsButton.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja limpar os logs?')) {
+                logsContainer.innerHTML = '<!-- REPLACE DIV -->';
+            }
+        });
+    </script>
 </body>
 </html>
 `
@@ -60,7 +102,9 @@ async function findPort() {
 async function listen() {
     const gotPort = await findPort();
     if (!gotPort) {
+        console.log("Portas disponíveis: ", (await SerialPort.list()).forEach(p => console.log(p.path, p.vendorId)));
         console.error("Não foram encontradas portas com Arduino.");
+        console.log("Insira o Arduino e tente novamente.");
         return;
     }
     const port = new SerialPort({path: gotPort.path, baudRate: 9600});
