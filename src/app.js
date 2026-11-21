@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
+const { json } = require('stream/consumers');
 const HTML_FILE = "./index.html";
 
 const RAW_HTML = `
@@ -80,16 +81,6 @@ const RAW_HTML = `
     <!-- REPLACE DIV -->
     </h4>
     <button id="limparLogs" class="limpar-logs">Limpar Logs</button>
-
-    <script>
-        const limparLogsButton = document.getElementById('limparLogs');
-        const logsContainer = document.querySelector('h4');
-        limparLogsButton.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja limpar os logs?')) {
-                logsContainer.innerHTML = '<!-- REPLACE DIV -->';
-            }
-        });
-    </script>
 </body>
 </html>
 `
@@ -102,7 +93,6 @@ async function findPort() {
 async function listen() {
     const gotPort = await findPort();
     if (!gotPort) {
-        console.log("Portas disponíveis: ", (await SerialPort.list()).forEach(p => console.log(p.path, p.vendorId)));
         console.error("Não foram encontradas portas com Arduino.");
         console.log("Insira o Arduino e tente novamente.");
         return;
@@ -112,7 +102,7 @@ async function listen() {
     const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
     parser.on('data', (line) => {
         let status = 0 // 1 aberto 2 bloqueado
-        if(line == 'HIGH') {
+        if (line == 'HIGH') {
             status = 1;
         }
         else if (line == 'LOW') {
@@ -123,6 +113,7 @@ async function listen() {
 }
 
 listen();
+console.log("Execute LIMPAR_LOGS para limpar todos os registros");
 
 function writeHtml(status) {
     const d = new Date();
@@ -150,4 +141,3 @@ function writeHtml(status) {
 
     fs.writeFileSync(HTML_FILE, data);
 }
-

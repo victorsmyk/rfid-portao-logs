@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logs</title>
-    <style>
+   <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap');
         body {
             max-width: 1200px;
@@ -62,7 +63,7 @@
         .log-blocked {
             background-color: hsla(0, 100%, 50%, 0.425);
         }
-    </style>
+   </style>
 </head>
 
 <body class="w3-dark-mode">
@@ -73,16 +74,5 @@
     <h4>
     <!-- REPLACE DIV -->
     </h4>
-    <button id="limparLogs" class="limpar-logs">Limpar Logs</button>
-
-    <script>
-        const limparLogsButton = document.getElementById('limparLogs');
-        const logsContainer = document.querySelector('h4');
-        limparLogsButton.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja limpar os logs?')) {
-                logsContainer.innerHTML = '<!-- REPLACE DIV -->';
-            }
-        });
-    </script>
 </body>
 </html>
