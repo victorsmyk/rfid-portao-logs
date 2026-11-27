@@ -24,6 +24,20 @@ as_root() {
   fi
 }
 
+open_default() {
+  case "$(uname -s)" in
+    Darwin) open "$1" ;;
+    Linux)
+      if have xdg-open; then
+        xdg-open "$1" >/dev/null 2>&1
+      else
+        echo "xdg-open nao encontrado. Abra manualmente: $1"
+        return 1
+      fi
+      ;;
+  esac
+}
+
 install_with_nvm() {
   echo "Instalando Node.js LTS com nvm (sem privilegios de administrador)..."
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
@@ -72,12 +86,36 @@ install_linux() {
   install_with_nvm
 }
 
+install_libnotify() {
+  [ "$(uname -s)" = "Linux" ] || return 0   # macOS nao precisa
+  if have notify-send; then
+    echo "notify-send ja esta instalado."
+    return 0
+  fi
+
+  echo "Instalando libnotify (notificacoes de desktop)..."
+  if have apt-get; then
+    as_root apt-get install -y libnotify-bin
+  elif have dnf; then
+    as_root dnf install -y libnotify
+  elif have yum; then
+    as_root yum install -y libnotify
+  elif have pacman; then
+    as_root pacman -S --needed --noconfirm libnotify
+  elif have zypper; then
+    as_root zypper install -y libnotify-tools
+  else
+    echo "Gerenciador de pacotes nao reconhecido. Instale o libnotify manualmente."
+    return 1
+  fi
+}
+
 if [ "${1:-}" != "--force" ] && have node; then
   echo "Node.js $(node -v) ja esta instalado."
 else
   case "$(uname -s)" in
     Darwin) install_macos ;;
-    Linux)  install_linux ;;
+    Linux)  install_linux;;
     *)
       echo "Sistema nao suportado: $(uname -s)"
       pause_exit 1
@@ -121,9 +159,15 @@ fi
 echo
 clear
 echo "Node.js e as dependencias foram instaladas com sucesso."
+echo "Instalando a biblioteca de notificacoes de desktop (libnotify)..."
+
+if ! install_libnotify; then
+  echo "Falha ao instalar libnotify. Notificacoes de desktop podem nao funcionar."
+fi
+
 echo "Iniciando: node src/app.js"
 echo
 node src/app.js &
 sleep 1
-firefox ./src/index.html &
+open_default ./src/index.html &
 pause_exit $?

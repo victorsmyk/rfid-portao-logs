@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
+const notifier = require('node-notifier');
 const HTML_FILE = __dirname + "/index.html";
 
 const RAW_HTML = `
@@ -104,9 +105,15 @@ async function listen() {
     }
     try {
         const port = new SerialPort({path: gotPort.path, baudRate: 9600});
+
+        port.on('error', (err) => {
+            console.error("Erro na porta serial:", err.message);
+        });
+
         console.log("Arduino identificado na porta ", gotPort.path);
         const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
         parser.on('data', (line) => {
+            line = line.trim();
             let status = 0 // 1 aberto 2 bloqueado 3 máximo de tentativas
             if (line == 'HIGH') {
                 status = 1;
@@ -115,6 +122,12 @@ async function listen() {
                 status = 2;
             }
             else if (line == 'MAX') {
+                notifier.notify({
+                    title: 'Máximo de tentativas incorretas atingido',
+                    message: 'O portão foi bloqueado devido a muitas tentativas incorretas.',
+                    sound: true,
+                    wait: true
+                });
                 status = 3;
             }
             writeHtml(status);
@@ -130,10 +143,12 @@ listen();
 console.log("Execute LIMPAR_LOGS para limpar todos os registros");
 
 function writeHtml(status) {
+    if(status === 0) return;
     const d = new Date();
-    const day = d.toDateString();
     const time = d.toTimeString();
     const timeWithoutGMT = time.split(" GMT")[0];
+    const day = d.toDateString();
+
     let newDiv = "";
 
     switch(status) {
