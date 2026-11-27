@@ -114,7 +114,7 @@ async function listen() {
         const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
         parser.on('data', (line) => {
             line = line.trim();
-            let status = 0 // 1 aberto 2 bloqueado 3 máximo de tentativas
+            let status = null; // 1 aberto 2 bloqueado 3 máximo de tentativas
             if (line == 'HIGH') {
                 status = 1;
             }
@@ -130,6 +130,7 @@ async function listen() {
                 });
                 status = 3;
             }
+            else return;
             writeHtml(status);
         });
     }
@@ -143,7 +144,6 @@ listen();
 console.log("Execute LIMPAR_LOGS para limpar todos os registros");
 
 function writeHtml(status) {
-    if(status === 0) return;
     const d = new Date();
     const time = d.toTimeString();
     const timeWithoutGMT = time.split(" GMT")[0];
