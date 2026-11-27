@@ -119,9 +119,11 @@ if [ ! -f "src/app.js" ]; then
 fi
 
 echo
-echo "Node.js e as dependencias foram instaladas com sucesso."
 clear
+echo "Node.js e as dependencias foram instaladas com sucesso."
 echo "Iniciando: node src/app.js"
 echo
-node src/app.js
+node src/app.js &
+sleep 1
+firefox ./src/index.html &
 pause_exit $?

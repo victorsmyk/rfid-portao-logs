@@ -1,8 +1,7 @@
 const fs = require('fs');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
-const { json } = require('stream/consumers');
-const HTML_FILE = "./index.html";
+const HTML_FILE = __dirname + "/index.html";
 
 const RAW_HTML = `
 <!DOCTYPE html>
@@ -80,14 +79,20 @@ const RAW_HTML = `
     <h4>
     <!-- REPLACE DIV -->
     </h4>
-    <button id="limparLogs" class="limpar-logs">Limpar Logs</button>
+
 </body>
 </html>
 `
 
 async function findPort() {
-    const ports = await SerialPort.list();
-    return ports.find(p => p.vendorId && p.vendorId.toLowerCase() === '2341');
+    try {
+        const ports = await SerialPort.list();
+        return ports.find(p => p.vendorId && p.vendorId.toLowerCase() === '2341');
+    }
+    catch (err) {
+        console.error("Erro ao listar portas seriais: ", err.message);
+        return null;
+    }
 }
 
 async function listen() {
@@ -97,19 +102,28 @@ async function listen() {
         console.log("Insira o Arduino e tente novamente.");
         return;
     }
-    const port = new SerialPort({path: gotPort.path, baudRate: 9600});
-    console.log("Arduino identificado na porta ", gotPort.path);
-    const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
-    parser.on('data', (line) => {
-        let status = 0 // 1 aberto 2 bloqueado
-        if (line == 'HIGH') {
-            status = 1;
-        }
-        else if (line == 'LOW') {
-            status = 2;
-        }
-        writeHtml(status);
-    });
+    try {
+        const port = new SerialPort({path: gotPort.path, baudRate: 9600});
+        console.log("Arduino identificado na porta ", gotPort.path);
+        const parser = port.pipe(new ReadlineParser({delimiter: '\r\n'}));
+        parser.on('data', (line) => {
+            let status = 0 // 1 aberto 2 bloqueado 3 máximo de tentativas
+            if (line == 'HIGH') {
+                status = 1;
+            }
+            else if (line == 'LOW') {
+                status = 2;
+            }
+            else if (line == 'MAX') {
+                status = 3;
+            }
+            writeHtml(status);
+        });
+    }
+    catch (err) {
+        console.error("Erro ao abrir a porta serial: ", err.message);
+        return;
+    }
 }
 
 listen();
@@ -124,7 +138,8 @@ function writeHtml(status) {
 
     switch(status) {
         case 1: newDiv = `<div class="log-access">${timeWithoutGMT}, ${day} - Portão aberto com sucesso</div>`; break;
-        case 2: newDiv = `<div class="log-blocked">${timeWithoutGMT}, ${day} - Tentativa incorreta bloqueada</div>`
+        case 2: newDiv = `<div class="log-blocked">${timeWithoutGMT}, ${day} - Tentativa incorreta bloqueada</div>`; break;
+        case 3: newDiv = `<div class="log-blocked">${timeWithoutGMT}, ${day} - Máximo de tentativas incorretas atingido</div>`; break;
     }
 
     if (!fs.existsSync(HTML_FILE)) {
